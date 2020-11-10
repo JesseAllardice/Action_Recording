@@ -9,6 +9,7 @@
 # https://stackoverflow.com/questions/52068277/change-frame-rate-in-opencv-3-4-2
 
 import os
+import glob
 import sys
 import re
 import cv2
@@ -141,53 +142,170 @@ def schedule_cap():
     # TODO: currently collect at max frame rate
     # get image resolution
     IMG_SIZE = get_camera_resolution(WEBCAM)
-
     # load Action_Recording_Schedule.json
+    with open('Action_Recording_Schedule.json') as schedule_file:
+        schedule_data = json.load(schedule_file)
     # check schedule structure
-
+    action_types = schedule_data["action_types"]
+    check_action_types(action_types)
+    state_types = schedule_data["state_types"]
+    check_state_types(state_types)
+    schedule = schedule_data["schedule"]
+    check_schedule_state_and_actions(action_types, state_types, schedule)
     # check for thumbnails
     # create missing thumbnails
-
-    # for schedule_item in schedule:
-    # execute schedule_item
-
+    check_thumbnails(action_types)
+    # go through the schedule:
+    for schedule_item in schedule:
+        # execute schedule_item
+        execute_schedule_item(schedule_item)
     # end and close windows
+    cv2.waitKey(1)
+    c.release()
+    cv2.destroyAllWindows()
+
+def execute_schedule_item(item: list):
+    state, action, time = tuple(item)
+    if state == 'setup':
+        execute_setup(action, time)
+    elif state == 'action_prompt':
+        execute_action_prompt(action, time)
+    elif state == 'action_record':
+        execute_action_record(action, time)
+    elif state == 'done':
+        execute_done(action, time)
+    else:
+        raise Exception("unknown schedule state.")
+
+def check_action_types(action_types: list) -> bool:
+    base_path =  os.getcwd()
+    action_images_path = os.path.join(base_path,'action_images')
+    if not os.path.isdir(action_images_path):
+        raise Exception("No action_images folder")
+    else:
+        file_names = os.listdir(action_images_path)
+        action_images = []
+        for file_name in file_names:
+            action_images.append(file_name.split('.')[0])
+        if set(action_types) <= set(action_images + ['random']):
+            return True
+        else:
+            raise Exception("schedule specifies an unknown action type.")
+
+def check_state_types(state_types: list) -> bool:
+    if not IMPLEMENTED_STATES:
+        raise Exception("No IMPLEMENTED_STATES list")
+    else:
+        if set(state_types) <= set(IMPLEMENTED_STATES):
+            return True
+        else:
+            raise Exception("schedule specifies an unknown state type.")
+
+def check_schedule_state_and_actions(action_types: list, state_types: list,schedule: list) -> bool:
+    for item in schedule:
+        if not item[0] in state_types:
+            raise Exception("schedule uses an unknown state type.")
+        if item[1] == '':
+            pass
+        elif not item[1] in action_types:
+            raise Exception("schedule uses an unknown state action.")
+    return True
+
+def check_thumbnails(actions: list) -> bool:
+    base_path =  os.getcwd()
+    silhouette_path = os.path.join(base_path, 'thumbnails', 'ideal_stance(silhouette).png')
+    if not os.isdir(silhouette_path):
+        raise Exception("No silhouette image")
+    for action in actions:
+        action_thumbnail_path = os.path.join(base_path, 'thumbnails', action +'.png')
+        if not os.isdir(silhouette_path):
+            create_thumbnail(action)
+
+def create_thumbnail(action: str):
+    base_path =  os.getcwd()
+    action_image_path = glob.glob(os.path.join(base_path,'action_images', action +'.*'))[0]
+    img = cv2.imread(action_image_path, cv2.IMREAD_COLOR)
+    # TODO: reshape to the same size as IMG_SIZE, adding black space if needed.
 
 def determine_schedule_item(schedule_item: list) -> bool:
     # determine which execute funciton to use
     return False # TODO: change to the value returned by the executor
 
-def execute_setup():
+def execute_setup(action, time):
     # determine N_frames
+    N_frame = determine_N_frames(time)
     # for frame in N_frames:
-    # record webcam frame
-    # overlap silouette
-    # overlap countdown
-    # display image
+    for i in range(N_frame):
+        r, frame = WEBCAM.read()
+        save_frame(frame) # TODO: replace with the over lap extra.
+        # exit the capture loop?
+        if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
+        # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
+            # exit the videocap loop if user enters 'q'
+            c.release()
+            cv2.destroyAllWindows()
+            return
+        # record webcam frame
+        # overlap silouette
+        # overlap countdown
+        # display image
 
-def execute_action_prompt():
+def execute_action_prompt(action, time):
     # determine N_frames
+    N_frame = determine_N_frames(time)
     # for frame in  N_frames:
-    # fetch action_image thumbnail
-    # overlay countdown
-    # overlay action heading
-    # display the image
+    for i in range(N_frame):
+        r, frame = WEBCAM.read()
+        save_frame(frame) # TODO: replace with the over lap extra.
+        # exit the capture loop?
+        if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
+        # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
+            # exit the videocap loop if user enters 'q'
+            c.release()
+            cv2.destroyAllWindows()
+            return
+        # fetch action_image thumbnail
+        # overlay countdown
+        # overlay action heading
+        # display the image
 
-def execute_action_record():
+def execute_action_record(action, time):
     # determine N_frames
+    N_frame = determine_N_frames(time)
     # for frame in N_frames:
-    # record frame
-    # save frame
-    # overlay countdown
-    # overlay action heading
-    # display image
+    for i in range(N_frame):
+        r, frame = WEBCAM.read()
+        save_frame(frame) # TODO: replace with the over lap extra.
+        # exit the capture loop?
+        if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
+        # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
+            # exit the videocap loop if user enters 'q'
+            c.release()
+            cv2.destroyAllWindows()
+            return
+        # record frame
+        # save frame
+        # overlay countdown
+        # overlay action heading
+        # display image
 
-def execute_done():
-    determine N_frames
+def execute_done(action, time):
+    # determine N_frames
+    N_frame = determine_N_frames(time)
     # for frame in N_frames
-    # fetch done thumbnail
-    # overlay user_name
-    # display image
+    for i in range(N_frame):
+        r, frame = WEBCAM.read()
+        save_frame(frame) # TODO: replace with the over lap extra.
+        # exit the capture loop?
+        if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
+        # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
+            # exit the videocap loop if user enters 'q'
+            c.release()
+            cv2.destroyAllWindows()
+            return
+        # fetch done thumbnail
+        # overlay user_name
+        # display image
 
 
 def determine_N_frames(timelength: float) -> int:

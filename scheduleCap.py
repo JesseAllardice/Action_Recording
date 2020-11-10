@@ -12,6 +12,7 @@ import os
 import glob
 import sys
 import re
+import json
 import cv2
 import numpy as np
 import time
@@ -37,6 +38,16 @@ GUESS_FPS_STANDARD = True # uses the measured fps to compare to a standard list 
 N_TEST = 30 # number of frames to use to estimate the camera fps.
 STANDARD_FPS_VALUES = [10, 15, 20, 24, 25, 30, 60, 120] # list of standard camera fps
 RECORDING_FPS = None
+
+# implemented states
+IMPLEMENTED_STATES = [
+    "setup",
+    "action_prompt",
+    "action_countdown",
+    "edge_window",
+    "action_record",
+    "done"
+]
 
 # collection schedule
 N_FRAMES = 100
@@ -161,7 +172,7 @@ def schedule_cap():
         execute_schedule_item(schedule_item)
     # end and close windows
     cv2.waitKey(1)
-    c.release()
+    WEBCAM.release()
     cv2.destroyAllWindows()
 
 def execute_schedule_item(item: list):
@@ -214,12 +225,15 @@ def check_schedule_state_and_actions(action_types: list, state_types: list,sched
 def check_thumbnails(actions: list) -> bool:
     base_path =  os.getcwd()
     silhouette_path = os.path.join(base_path, 'thumbnails', 'ideal_stance(silhouette).png')
-    if not os.isdir(silhouette_path):
+    if not os.path.isfile(silhouette_path):
         raise Exception("No silhouette image")
     for action in actions:
-        action_thumbnail_path = os.path.join(base_path, 'thumbnails', action +'.png')
-        if not os.isdir(silhouette_path):
-            create_thumbnail(action)
+        if action == 'random':
+            pass
+        else:
+            action_thumbnail_path = os.path.join(base_path, 'thumbnails', action +'.png')
+            if not os.path.isfile(action_thumbnail_path):
+                create_thumbnail(action)
 
 def create_thumbnail(action: str):
     base_path =  os.getcwd()

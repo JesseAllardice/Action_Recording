@@ -16,7 +16,8 @@ import numpy as np
 import time
 from datetime import datetime
 
-#presets
+# Variables
+# presets
 GRAY_SCALE = False
 COLLECT_VIDEO = True
 LIMIT_FRAME_RATE = True

@@ -1,0 +1,24 @@
+{
+    "schedule_name": "Initial Schedule",
+    "action_types": [
+        "rest",
+        "ROTS",
+        "squats",
+        "star_jumps",
+        "punching",
+        "random"
+    ],
+    "state_types": [
+        "setup",
+        "action_prompt",
+        "action_countdown",
+        "edge_window",
+        "action_record",
+        "done"
+    ],
+    "schedule": [
+        ["setup", "" ,20],
+        ["action_record", "ROTS" ,20],
+        ["action_record", "random" ,20]
+    ]
+}

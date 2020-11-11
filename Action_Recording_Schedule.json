@@ -20,7 +20,8 @@
         ["setup", "" ,20],
         ["action_prompt", "ROTS", 10],
         ["action_record", "ROTS" ,20],
-        ["action_prompt", "random", 10],
-        ["action_record", "random" ,20]
+        ["action_prompt", "punching", 10],
+        ["action_record", "punching" ,20],
+        ["done", "", 10]
     ]
 } 

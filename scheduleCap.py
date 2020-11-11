@@ -156,20 +156,23 @@ def schedule_cap():
     # load Action_Recording_Schedule.json
     with open('Action_Recording_Schedule.json') as schedule_file:
         schedule_data = json.load(schedule_file)
-    # check schedule structure
+    # unpack schedule structure
     action_types = schedule_data["action_types"]
-    check_action_types(action_types)
     state_types = schedule_data["state_types"]
-    check_state_types(state_types)
     schedule = schedule_data["schedule"]
+    # check schedule structure
+    check_action_types(action_types)
+    check_state_types(state_types)
     check_schedule_state_and_actions(action_types, state_types, schedule)
     # check for thumbnails
     # create missing thumbnails
     check_thumbnails(action_types)
     # go through the schedule:
     for schedule_item in schedule:
+        # TODO: check if the state is action_prompt and action is random
         # execute schedule_item
         execute_schedule_item(schedule_item)
+        # TODO: if the state is action_record clear prev_action
     # end and close windows
     cv2.waitKey(1)
     WEBCAM.release()
@@ -241,16 +244,53 @@ def create_thumbnail(action: str):
     img = cv2.imread(action_image_path, cv2.IMREAD_COLOR)
     # TODO: reshape to the same size as IMG_SIZE, adding black space if needed.
 
-def determine_schedule_item(schedule_item: list) -> bool:
-    # determine which execute funciton to use
-    return False # TODO: change to the value returned by the executor
+def load_silhouette_image():
+    base_path =  os.getcwd()
+    silhouette_path = os.path.join(base_path, 'thumbnails', 'ideal_stance(silhouette).png')
+    img = cv2.imread(silhouette_path, cv2.IMREAD_COLOR)
+    try:
+        if isinstance(img,np.ndarray):
+            return img
+    except:
+        if img == None:
+            raise Exception("silhouette image not loaded properly")
+        else:
+            raise Exception("unknown error")
+
+def load_action_image(filename: str):
+    base_path =  os.getcwd()
+    file_path = os.path.join(base_path, 'thumbnails', filename + '.png')
+    img = cv2.imread(file_path, cv2.IMREAD_COLOR)
+    try:
+        if isinstance(img,np.ndarray):
+            return img
+    except:
+        if img == None:
+            raise Exception("action image not loaded properly")
+        else:
+            raise Exception("unknown error")
+
+def mask_on_black(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    b_black_mask = b == 0 # TODO: replace with [0,0,0] check
+    exclusive_sum = a*b_black_mask + b * (~b_black_mask)
+    return exclusive_sum
 
 def execute_setup(action, time):
     # determine N_frames
     N_frame = determine_N_frames(time)
+    # load silhouette image
+    silhouette_img = load_silhouette_image()
     # for frame in N_frames:
     for i in range(N_frame):
+        # set countdown timer
+        countdown = int(time * (1 - i/N_frame))
+        # record webcam frame
         r, frame = WEBCAM.read()
+        # overlap silouette
+        frame = mask_on_black(frame, silhouette_img)
+        # overlap countdown
+        frame = overlay_countdown(frame, countdown)
+        # display image
         save_frame(frame) # TODO: replace with the over lap extra.
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
@@ -259,17 +299,25 @@ def execute_setup(action, time):
             c.release()
             cv2.destroyAllWindows()
             return
-        # record webcam frame
-        # overlap silouette
-        # overlap countdown
-        # display image
 
 def execute_action_prompt(action, time):
     # determine N_frames
     N_frame = determine_N_frames(time)
+    # load action image
+    action_img = load_action_image(action)
     # for frame in  N_frames:
     for i in range(N_frame):
-        r, frame = WEBCAM.read()
+        # set countdown timer
+        countdown = int(time * (1 - i/N_frame))
+        # record webcam frame to set timing
+        _, _ = WEBCAM.read()
+        # fetch action_image thumbnail
+        frame = action_img
+        # overlap countdown
+        frame = overlay_countdown(frame, countdown)
+        # overlay action heading
+        # TODO: overlay action heading text.
+        # display the image
         save_frame(frame) # TODO: replace with the over lap extra.
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
@@ -278,17 +326,23 @@ def execute_action_prompt(action, time):
             c.release()
             cv2.destroyAllWindows()
             return
-        # fetch action_image thumbnail
-        # overlay countdown
-        # overlay action heading
-        # display the image
 
 def execute_action_record(action, time):
     # determine N_frames
     N_frame = determine_N_frames(time)
     # for frame in N_frames:
     for i in range(N_frame):
+        # set countdown timer
+        countdown = int(time * (1 - i/N_frame))
+        # record webcam frame
         r, frame = WEBCAM.read()
+        # save frame
+        save_frame(frame) # TODO: replace with the over lap extra.
+        # overlay countdown
+        frame = overlay_countdown(frame, countdown)
+        # overlay action heading
+        # TODO: overlay action heading text.
+        # display the image
         save_frame(frame) # TODO: replace with the over lap extra.
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
@@ -297,18 +351,25 @@ def execute_action_record(action, time):
             c.release()
             cv2.destroyAllWindows()
             return
-        # record frame
-        # save frame
-        # overlay countdown
-        # overlay action heading
-        # display image
 
 def execute_done(action, time):
     # determine N_frames
     N_frame = determine_N_frames(time)
+    # load done image
+    done_img = load_action_image('done')
     # for frame in N_frames
     for i in range(N_frame):
-        r, frame = WEBCAM.read()
+        # set countdown timer
+        countdown = int(time * (1 - i/N_frame))
+        # record webcam frame to set timing
+        _, _ = WEBCAM.read()
+        # fetch action_image thumbnail
+        frame = done_img
+        # overlap countdown
+        # frame = overlay_countdown(frame, countdown)
+        # overlay action heading
+        # TODO: overlay action heading text.
+        # display the image
         save_frame(frame) # TODO: replace with the over lap extra.
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
@@ -325,14 +386,27 @@ def execute_done(action, time):
 def determine_N_frames(timelength: float) -> int:
     # calculate the number of frames needed for collection
     # to reach the desired time period.
-    return 1 # TODO: change to the calculated value.
+    N_frames = timelength * RECORDING_FPS
+    return 1 #N_frames # TODO: change to the calculated value.
 
-def overlay_countdown(img: np.array, count: float) -> np.array:
-    # overlay the count down on the img
-    # return the edited image
-    return img # TODO: change to the edited image
+def overlay_countdown(img: np.ndarray, num: int) -> np.ndarray:
+    # Write some Text
+    font                   = cv2.FONT_HERSHEY_SIMPLEX
+    bottomLeftCornerOfText = (110,350)
+    fontScale              = 10
+    fontColor              = (200,200,200)
+    lineType               = 20
+    cv2.putText(
+        img, str(num),
+        bottomLeftCornerOfText,
+        font,
+        fontScale,
+        fontColor,
+        lineType
+    )
+    return img
 
-def overlay_action_heading(img: np.array, action: str) -> np.array:
+def overlay_action_heading(img: np.ndarray, action: str) -> np.ndarray:
     # overlay the action type on the img
     # prefer not in the way
     # return the edited image
@@ -369,7 +443,6 @@ def get_camera_fps(cv2VideoCapture, N_test: int, guess_fps_standard: bool) -> in
         min_index = np.argmin(squared_error)
         fps = int(possible_values[min_index])
     return fps
-
 
 def calc_camera_fps(cv2VideoCapture, N_test: int) -> float:
     """Calculates the average frame rate for N frames collected
@@ -429,7 +502,7 @@ def save_image(img):
     # image_name = re.sub(' ','_',str(datetime.now()).split('.')[0])
     image_name = str(datetime.now()).replace(' ','-').replace(':','-').replace('.','-')  #'test'
     images_path = os.path.join(base_path,'images')
-    image_path = os.path.join(base_path,'images',image_name+'.png')
+    image_path = os.path.join(base_path,'images',image_name+'.png') #TODO: differing save paths for user, data, action, batch id
     #print('ready to save image:'+image_path)
     if os.path.isdir(images_path):
         # if not cv2.imwrite(r'C:\Users\jesse\OneDrive\Entrepreneurs First\Adaptive Exergames\Video Recording\Test Record\images\test.png',img):

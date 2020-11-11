@@ -21,10 +21,17 @@ from datetime import datetime
 # Global Variables
 
 # record details
+USER_ID = 'JESSE-1810' # should be updated for new users!
+DATE_RECORDED = str(datetime.now()).split(' ')[0]
+DATA_PATH = 'images'
 
 # webcam feed
 WEBCAM = None
 IMG_SIZE = None
+
+# testing short-circuits
+TESTING = True
+
 # presets
 GRAY_SCALE = False
 COLLECT_VIDEO = True
@@ -141,6 +148,12 @@ def schedule_cap():
     global RECORDING_FPS
     global WEBCAM
     global IMG_SIZE
+    # check for or create the user folder
+    user_path = os.path.join(DATA_PATH, USER_ID)
+    check_or_create_dir(user_path)
+    # check for or create the data folder
+    date_path = os.path.join(user_path, DATE_RECORDED)
+    check_or_create_dir(date_path)
     # set the webcama feed
     WEBCAM = cv2.VideoCapture(0) # 0 for the inbuilt camera i.e webcam
     # get camera fps
@@ -333,8 +346,17 @@ def execute_action_prompt(action, time):
             return
 
 def execute_action_record(action, time):
+    # check for or create action folder
+    action_path = os.path.join(DATA_PATH, USER_ID, DATE_RECORDED, action)
+    check_or_create_dir(action_path)
+    # check for or create batch folder
+    batch_ID = str(datetime.now()).split(' ')[1].replace(':','-').replace('.','-')
+    batch_path = os.path.join(action_path, batch_ID)
+    check_or_create_dir(batch_path)
     # determine N_frames
     N_frame = determine_N_frames(time)
+    # create log file
+    creat_log(batch_path, action, time, N_frame)
     # for frame in N_frames:
     for i in range(N_frame):
         # set countdown timer
@@ -342,7 +364,7 @@ def execute_action_record(action, time):
         # record webcam frame
         r, frame = WEBCAM.read()
         # save frame
-        save_frame(frame) # TODO: replace with the over lap extra.
+        save_image_to_path(frame, batch_path)
         # overlay countdown
         frame = overlay_countdown(frame, countdown)
         # overlay action heading
@@ -389,12 +411,29 @@ def execute_done(action, time):
         # overlay user_name
         # display image
 
+def creat_log(batch_path, action, time, N_frame):
+    log = {}
+    log["user_id"] = USER_ID
+    log["date"] = DATE_RECORDED
+    log["action"] = action
+    log["time_length"] = time
+    log["Number_of_frames"] = N_frame
+    log["fps"] = RECORDING_FPS
+    log_path = os.path.join(batch_path, 'log.json')
+    try:
+        with open(log_path, 'w') as outfile:
+            json.dump(log, outfile)
+    except:
+        raise Exception("Unable to write log file.")
 
 def determine_N_frames(timelength: float) -> int:
     # calculate the number of frames needed for collection
     # to reach the desired time period.
     N_frames = timelength * RECORDING_FPS
-    return N_frames # TODO: change to the calculated value.
+    if not TESTING:
+        return N_frames # TODO: change to the calculated value.
+    else:
+        return 1
 
 def overlay_countdown(img: np.ndarray, num: int) -> np.ndarray:
     # Write some Text
@@ -482,6 +521,28 @@ def get_camera_resolution(cv2VideoCapture) -> tuple:
     r, frame = cv2VideoCapture.read()
     return np.shape(frame)[:2]
 
+def save_image_to_path(img, path):
+    """saves the image to the images folder.
+
+    Args:
+        img (np.ndarray): 2D numpy array image
+        path (str): path to save to.
+
+    Raises:
+        Exception: Could not write image
+    """
+    base_path =  os.getcwd()
+    # image_name = re.sub(' ','_',str(datetime.now()).split('.')[0])
+    image_name = str(datetime.now()).replace(' ','-').replace(':','-').replace('.','-')  #'test'
+    image_path = os.path.join(os.getcwd(), path, image_name+'.png')
+    #print('ready to save image:'+image_path)
+    if os.path.isdir(path):
+        if not cv2.imwrite(image_path,img):
+            raise Exception("Could not write image")
+        #print('image saved')
+    else:
+        raise Exception("invalid save path.")
+
 def save_frame(frame):
     """Show the image, convert to gray-scale if desired.
 
@@ -517,6 +578,19 @@ def save_image(img):
         if not cv2.imwrite(image_path,img):
             raise Exception("Could not write image")
         #print('image saved')
+
+def check_or_create_dir(relative_path: str):
+    base_path =  os.getcwd()
+    dir_path = os.path.join(base_path, relative_path)
+    if os.path.isdir(dir_path):
+        print("The directory %s already exists" % dir_path)
+    else:
+        try:
+            os.mkdir(dir_path)
+        except  OSError:
+            print("Creation of the directory %s failed" % dir_path)
+        else:
+            print("Successfully created the directory %s " % dir_path)
 
 def calc_frame_rate_metrics():
     """calculate the fps rate that the datarecording achieved.

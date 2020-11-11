@@ -19,6 +19,9 @@ import time
 from datetime import datetime
 
 # Global Variables
+
+# record details
+
 # webcam feed
 WEBCAM = None
 IMG_SIZE = None
@@ -291,7 +294,8 @@ def execute_setup(action, time):
         # overlap countdown
         frame = overlay_countdown(frame, countdown)
         # display image
-        save_frame(frame) # TODO: replace with the over lap extra.
+        cv2.imshow('frame :',frame)
+        #save_frame(frame)
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
         # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
@@ -312,13 +316,14 @@ def execute_action_prompt(action, time):
         # record webcam frame to set timing
         _, _ = WEBCAM.read()
         # fetch action_image thumbnail
-        frame = action_img
+        frame = load_action_image(action) # action_img
         # overlap countdown
         frame = overlay_countdown(frame, countdown)
         # overlay action heading
         # TODO: overlay action heading text.
         # display the image
-        save_frame(frame) # TODO: replace with the over lap extra.
+        cv2.imshow('frame :',frame)
+        # save_frame(frame)
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
         # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
@@ -343,7 +348,8 @@ def execute_action_record(action, time):
         # overlay action heading
         # TODO: overlay action heading text.
         # display the image
-        save_frame(frame) # TODO: replace with the over lap extra.
+        cv2.imshow('frame :',frame)
+        # save_frame(frame)
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
         # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
@@ -370,7 +376,8 @@ def execute_done(action, time):
         # overlay action heading
         # TODO: overlay action heading text.
         # display the image
-        save_frame(frame) # TODO: replace with the over lap extra.
+        cv2.imshow('frame :',frame)
+        # save_frame(frame)
         # exit the capture loop?
         if cv2.waitKey(1) & 0XFF == ord('q'): # waitKey(1) waits 1 us and keys a entered key.
         # & 0XFF truncats the last 8 bits, which then get compared to 'q'.
@@ -387,7 +394,7 @@ def determine_N_frames(timelength: float) -> int:
     # calculate the number of frames needed for collection
     # to reach the desired time period.
     N_frames = timelength * RECORDING_FPS
-    return 1 #N_frames # TODO: change to the calculated value.
+    return N_frames # TODO: change to the calculated value.
 
 def overlay_countdown(img: np.ndarray, num: int) -> np.ndarray:
     # Write some Text

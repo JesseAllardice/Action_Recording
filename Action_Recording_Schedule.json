@@ -18,10 +18,10 @@
     ],
     "schedule": [
         ["setup", "" ,20],
-        ["action_prompt", "ROTS", 10],
+        ["action_prompt", "ROTS", 5],
         ["action_record", "ROTS" ,20],
-        ["action_prompt", "punching", 10],
+        ["action_prompt", "punching", 5],
         ["action_record", "punching" ,20],
         ["done", "", 10]
     ]
-} 
+}

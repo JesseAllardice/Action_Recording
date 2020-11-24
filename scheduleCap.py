@@ -21,36 +21,39 @@ from datetime import datetime
 # Global Variables
 
 # record details
-USER_ID = 'JESSE-1810' # should be updated for new users!
-DATE_RECORDED = str(datetime.now()).split(' ')[0]
-DATA_PATH = 'images'
+_RECORD_DETAILS = {
+    "USER_ID" : 'JESSE-1810', # should be updated for new users!
+    "DATE_RECORDED" : str(datetime.now()).split(' ')[0],
+    "DATA_PATH" : 'images',
+}
 
 # webcam feed
-WEBCAM = None
-IMG_SIZE = None
+_WEBCAM_FEED = {
+    "WEBCAM" : None,
+    "IMG_SIZE" : None,
+}
 
 # testing short-circuits
-TESTING = True
+_TESTING = [True,]
 
 # presets
-GRAY_SCALE = False
-COLLECT_VIDEO = True
-LIMIT_FRAME_RATE = True
-LIMIT_METHOD = 1
-# 0 using the time difference to control the fps.
-# 1 using a fixed multipule of the camera frame rate. Effectively down sampling.
-FPS_LIMIT = 10
-
-HARD_CODE_CAMERA_FPS = False # if you want to input the camera fps
-CAMERA_FPS = 30 # sets the hardcoded camera fps if used.
-
-GUESS_FPS_STANDARD = True # uses the measured fps to compare to a standard list of fps values.
-N_TEST = 30 # number of frames to use to estimate the camera fps.
-STANDARD_FPS_VALUES = [10, 15, 20, 24, 25, 30, 60, 120] # list of standard camera fps
-RECORDING_FPS = None
+_PRESETS = {
+    "GRAY_SCALE" : False,
+    "COLLECT_VIDEO" : True,
+    "LIMIT_FRAME_RATE" : True,
+    "LIMIT_METHOD" : 1,# 0 using the time difference to control the fps.
+    # 1 using a fixed multipule of the camera frame rate. Effectively down sampling.
+    "FPS_LIMIT" : 10,
+    "HARD_CODE_CAMERA_FPS" : False, # if you want to input the camera fps
+    "CAMERA_FPS" : 30, # sets the hardcoded camera fps if used.
+    "GUESS_FPS_STANDARD" : True, # uses the measured fps to compare to a standard list of fps values.
+    "N_TEST" : 30, # number of frames to use to estimate the camera fps.
+    "STANDARD_FPS_VALUES" : [10, 15, 20, 24, 25, 30, 60, 120], # list of standard camera fps
+    "RECORDING_FPS" : None,
+}
 
 # implemented states
-IMPLEMENTED_STATES = [
+_IMPLEMENTED_STATES = [
     "setup",
     "action_prompt",
     "action_countdown",
@@ -60,33 +63,35 @@ IMPLEMENTED_STATES = [
 ]
 
 # collection schedule
-N_FRAMES = 100
+_Global = {
+    "N_FRAMES" : 100, # the number of frames to collect
+}
 
 def video_cap():
     c = cv2.VideoCapture(0) # 0 for the inbuilt camera i.e webcam
     # check camera fps
     fps = get_camera_fps(
         cv2VideoCapture=c,
-        N_test=N_TEST,
-        guess_fps_standard=GUESS_FPS_STANDARD
+        N_test=_PRESETS["N_TEST"],
+        guess_fps_standard=_PRESETS["GUESS_FPS_STANDARD"]
         )
     print('Cameras max fps is determined to be:',fps)
-    # if HARD_CODE_CAMERA_FPS is True then ignore the calculated fps and use the preset CAMERA_FPS
-    if HARD_CODE_CAMERA_FPS:
-        fps = CAMERA_FPS
+    # if _PRESETS["HARD_CODE_CAMERA_FPS"] is True then ignore the calculated fps and use the preset CAMERA_FPS
+    if _PRESETS["HARD_CODE_CAMERA_FPS"]:
+        fps = _PRESETS["CAMERA_FPS"]
     # series of snapshots (for video)
-    if COLLECT_VIDEO:
-        if LIMIT_FRAME_RATE: # limit the frame rate
-            if LIMIT_METHOD == 0:
+    if _PRESETS["COLLECT_VIDEO"]:
+        if _PRESETS["LIMIT_FRAME_RATE"]: # limit the frame rate
+            if _PRESETS["LIMIT_METHOD"] == 0:
                 # because the clocks arent matched there is frame dropping occuring in
                 # this technique.
                 # If possible use the non rate limited technique.
                 start_time = time.time()
                 i = 0
-                while i < N_FRAMES:
+                while i < _Global["N_FRAMES"]:
                     time_elapsed = time.time() - start_time
                     r, frame = c.read()
-                    if time_elapsed > 1./FPS_LIMIT:
+                    if time_elapsed > 1./_PRESETS["FPS_LIMIT"]:
                         start_time = time.time()
                         save_frame(frame)
                         i += 1
@@ -97,13 +102,13 @@ def video_cap():
                         c.release()
                         cv2.destroyAllWindows()
                         return
-            if LIMIT_METHOD == 1:
+            if _PRESETS["LIMIT_METHOD"] == 1:
                 # This method reachs the desired fps rate. However requires knowledge of the
                 # Camera fps.
                 n = 0
-                N = fps // FPS_LIMIT
+                N = fps // _PRESETS["FPS_LIMIT"]
                 i = 0
-                while i < N_FRAMES:
+                while i < _Global["N_FRAMES"]:
                     r, frame = c.read()
                     if n % N == 0:
                         save_frame(frame)
@@ -117,7 +122,7 @@ def video_cap():
                         return
                     n += 1
         else: # dont limit the frame rate
-            for i in range(N_FRAMES):
+            for i in range(_Global["N_FRAMES"]):
                 r, frame = c.read()
                 save_frame(frame)
                 # exit the capture loop?
@@ -145,30 +150,30 @@ def video_cap():
 
 def schedule_cap():
     # global variables that are updated
-    global RECORDING_FPS
-    global WEBCAM
-    global IMG_SIZE
+    # RECORDING_FPS
+    # WEBCAM
+    # IMG_SIZE
     # check for or create the user folder
-    user_path = os.path.join(DATA_PATH, USER_ID)
+    user_path = os.path.join(_RECORD_DETAILS["DATA_PATH"], _RECORD_DETAILS["USER_ID"])
     check_or_create_dir(user_path)
     # check for or create the data folder
-    date_path = os.path.join(user_path, DATE_RECORDED)
+    date_path = os.path.join(user_path, _RECORD_DETAILS["DATE_RECORDED"])
     check_or_create_dir(date_path)
     # set the webcama feed
-    WEBCAM = cv2.VideoCapture(0) # 0 for the inbuilt camera i.e webcam
+    _WEBCAM_FEED["WEBCAM"] = cv2.VideoCapture(0) # 0 for the inbuilt camera i.e webcam
     # get camera fps
     fps = get_camera_fps(
-        cv2VideoCapture=WEBCAM,
-        N_test=N_TEST,
-        guess_fps_standard=GUESS_FPS_STANDARD
+        cv2VideoCapture=_WEBCAM_FEED["WEBCAM"],
+        N_test=_PRESETS["N_TEST"],
+        guess_fps_standard=_PRESETS["GUESS_FPS_STANDARD"]
     )
     print('Cameras max fps is determined to be:', fps)
     # set camera recording fps
-    RECORDING_FPS = fps # TODO: currently collect at max frame rate
+    _PRESETS["RECORDING_FPS"] = fps # TODO: currently collect at max frame rate
     # set record method
     # TODO: currently collect at max frame rate
     # get image resolution
-    IMG_SIZE = get_camera_resolution(WEBCAM)
+    _WEBCAM_FEED["IMG_SIZE"] = get_camera_resolution(_WEBCAM_FEED["WEBCAM"])
     # load Action_Recording_Schedule.json
     with open('Action_Recording_Schedule.json') as schedule_file:
         schedule_data = json.load(schedule_file)
@@ -191,7 +196,7 @@ def schedule_cap():
         # TODO: if the state is action_record clear prev_action
     # end and close windows
     cv2.waitKey(1)
-    WEBCAM.release()
+    _WEBCAM_FEED["WEBCAM"].release()
     cv2.destroyAllWindows()
 
 def execute_schedule_item(item: list):
@@ -223,10 +228,10 @@ def check_action_types(action_types: list) -> bool:
             raise Exception("schedule specifies an unknown action type.")
 
 def check_state_types(state_types: list) -> bool:
-    if not IMPLEMENTED_STATES:
+    if not _IMPLEMENTED_STATES:
         raise Exception("No IMPLEMENTED_STATES list")
     else:
-        if set(state_types) <= set(IMPLEMENTED_STATES):
+        if set(state_types) <= set(_IMPLEMENTED_STATES):
             return True
         else:
             raise Exception("schedule specifies an unknown state type.")
@@ -301,7 +306,7 @@ def execute_setup(action, time):
         # set countdown timer
         countdown = int(time * (1 - i/N_frame))
         # record webcam frame
-        r, frame = WEBCAM.read()
+        r, frame = _WEBCAM_FEED["WEBCAM"].read()
         # overlap silouette
         frame = mask_on_black(frame, silhouette_img)
         # overlap countdown
@@ -327,7 +332,7 @@ def execute_action_prompt(action, time):
         # set countdown timer
         countdown = int(time * (1 - i/N_frame))
         # record webcam frame to set timing
-        _, _ = WEBCAM.read()
+        _, _ = _WEBCAM_FEED["WEBCAM"].read()
         # fetch action_image thumbnail
         frame = load_action_image(action) # action_img
         # overlap countdown
@@ -347,7 +352,12 @@ def execute_action_prompt(action, time):
 
 def execute_action_record(action, time):
     # check for or create action folder
-    action_path = os.path.join(DATA_PATH, USER_ID, DATE_RECORDED, action)
+    action_path = os.path.join(
+        _RECORD_DETAILS["DATA_PATH"],
+        _RECORD_DETAILS["USER_ID"],
+        _RECORD_DETAILS["DATE_RECORDED"],
+        action
+    )
     check_or_create_dir(action_path)
     # check for or create batch folder
     batch_ID = str(datetime.now()).split(' ')[1].replace(':','-').replace('.','-')
@@ -362,7 +372,7 @@ def execute_action_record(action, time):
         # set countdown timer
         countdown = int(time * (1 - i/N_frame))
         # record webcam frame
-        r, frame = WEBCAM.read()
+        r, frame = _WEBCAM_FEED["WEBCAM"].read()
         # save frame
         save_image_to_path(frame, batch_path)
         # overlay countdown
@@ -390,7 +400,7 @@ def execute_done(action, time):
         # set countdown timer
         countdown = int(time * (1 - i/N_frame))
         # record webcam frame to set timing
-        _, _ = WEBCAM.read()
+        _, _ = _WEBCAM_FEED["WEBCAM"].read()
         # fetch action_image thumbnail
         frame = done_img
         # overlap countdown
@@ -413,12 +423,12 @@ def execute_done(action, time):
 
 def creat_log(batch_path, action, time, N_frame):
     log = {}
-    log["user_id"] = USER_ID
-    log["date"] = DATE_RECORDED
+    log["user_id"] = _RECORD_DETAILS["USER_ID"]
+    log["date"] = _RECORD_DETAILS["DATE_RECORDED"]
     log["action"] = action
     log["time_length"] = time
     log["Number_of_frames"] = N_frame
-    log["fps"] = RECORDING_FPS
+    log["fps"] = _PRESETS["RECORDING_FPS"]
     log_path = os.path.join(batch_path, 'log.json')
     try:
         with open(log_path, 'w') as outfile:
@@ -429,8 +439,8 @@ def creat_log(batch_path, action, time, N_frame):
 def determine_N_frames(timelength: float) -> int:
     # calculate the number of frames needed for collection
     # to reach the desired time period.
-    N_frames = timelength * RECORDING_FPS
-    if not TESTING:
+    N_frames = timelength * _PRESETS["RECORDING_FPS"]
+    if not _TESTING[0]:
         return N_frames # TODO: change to the calculated value.
     else:
         return 1
@@ -484,7 +494,7 @@ def get_camera_fps(cv2VideoCapture, N_test: int, guess_fps_standard: bool) -> in
     fps = calc_camera_fps(cv2VideoCapture, N_test)
     if guess_fps_standard:
         # find the closest standard value fps
-        possible_values = np.array(STANDARD_FPS_VALUES)
+        possible_values = np.array(_PRESETS["STANDARD_FPS_VALUES"])
         squared_error = (possible_values - fps)**2
         min_index = np.argmin(squared_error)
         fps = int(possible_values[min_index])
@@ -549,7 +559,7 @@ def save_frame(frame):
     Args:
         frame (np.array): 2D numpy array of the image
     """
-    if GRAY_SCALE: # capture gray-scale images
+    if _PRESETS["GRAY_SCALE"]: # capture gray-scale images
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # convert to gray
         cv2.imshow('frame :',gray)
         save_image(gray)

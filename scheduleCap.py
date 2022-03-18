@@ -34,7 +34,7 @@ _WEBCAM_FEED = {
 }
 
 # testing short-circuits
-_TESTING = [True,]
+_TESTING = [False,]
 
 # presets
 _PRESETS = {

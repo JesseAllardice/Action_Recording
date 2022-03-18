@@ -19,15 +19,15 @@
     "schedule": [
         ["setup", "" ,20],
         ["action_prompt", "rest", 5],
-        ["action_record", "rest" ,20],
+        ["action_record", "rest" ,60],
         ["action_prompt", "ROTS", 5],
-        ["action_record", "ROTS" ,20],
+        ["action_record", "ROTS" ,60],
         ["action_prompt", "squats", 5],
-        ["action_record", "squats" ,20],
+        ["action_record", "squats" ,60],
         ["action_prompt", "star_jumps", 5],
-        ["action_record", "star_jumps" ,20],
+        ["action_record", "star_jumps" ,60],
         ["action_prompt", "punching", 5],
-        ["action_record", "punching" ,20],
+        ["action_record", "punching" ,60],
         ["done", "", 10]
     ]
 }

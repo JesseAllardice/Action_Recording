@@ -1,5 +1,6 @@
-# Webcam_Recording
+# Action_Recording
 
+This project enables the user to easily collect a automatically annotated dataset of human exercise with video. The collected datasets can then be used to train a deep learning model for exercise recognition and repetition rate estimation with the project [Action-Recognition](https://github.com/JesseAllardice/Action-Recognition).
 # scheduleCap.py
 scheduleCap.py collects a labelled dataset of exercise movements in the form of ordered webcam images.
 
